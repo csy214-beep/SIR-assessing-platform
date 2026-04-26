@@ -14,7 +14,6 @@
 - ⚡ **即时结果** – 答完所有题目立即获得评分与个性化建议
 - 🎲 **灵活选题** – 普通版固定 30/60 题；增强版 600 题题库智能随机抽题，覆盖 6 大心理学维度
 - 💝 **人文关怀** – 结果页面提供鼓励语、温暖关怀和个性化建议
-- 🔄 **本地历史** – 自动保存最近 50 次评估记录（仅存储在您的浏览器）
 
 ---
 
@@ -24,23 +23,6 @@
 
 1. 下载本项目所有文件（`index.html`、`style.css`、`app.js`）
 2. 直接用浏览器打开 `index.html` 即可开始评估
-
-### 使用本地静态服务器（推荐，可避免部分跨域限制）
-
-```bash
-# 如果安装了 Node.js
-npx serve .
-
-# 或使用 Python
-python -m http.server 8000
-
-# 或使用 PHP
-php -S localhost:8000
-```
-
-然后访问 `http://localhost:8000`。
-
----
 
 ## 📁 项目结构
 
@@ -79,7 +61,6 @@ php -S localhost:8000
 ## 🙏 致谢与来源
 
 - 原始项目：[rstqxq/SIR-assessing-platform](https://github.com/rstqxq/SIR-assessing-platform)  by [@rstqxq](https://github.com/rstqxq)
-- 纯前端重构：**Pfolg**
 - 题目来源：哈佛心理学系社区，部分经大模型翻译优化
 
 ---
