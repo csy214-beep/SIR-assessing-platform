@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>性压抑指数评估平台</title>
+
+    <!-- 预连接优化 -->
+    <link rel="preconnect" href="">
+
+    <!-- 内联关键CSS，防止布局偏移 -->
+    <style>
+        /* 关键基础样式 - 内联以防止FOUC */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+
+        /* 预加载遮罩 */
+        #preloadOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            transition: opacity 0.5s ease;
+        }
+
+        #preloadOverlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .preload-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: preload-spin 0.8s linear infinite;
+        }
+
+        @keyframes preload-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 视图默认隐藏 */
+        .view {
+            display: none;
+        }
+
+        /* 防止布局偏移的占位 */
+        .app-container {
+            min-height: 100vh;
+        }
+    </style>
+
+    <!-- 预加载CSS -->
+    <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="style.css">
+    </noscript>
+
+    <!-- 外部样式表 -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- 预加载遮罩 -->
+    <div id="preloadOverlay">
+        <div class="preload-spinner"></div>
+        <p style="margin-top: 1rem; font-size: 1.1rem;">正在加载...</p>
+    </div>
+
+    <div class="app-container" id="appContainer" style="visibility: hidden;">
+        <!-- 加载遮罩 -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner-ring"></div>
+            <p id="loadingText">加载中...</p>
+        </div>
+
+        <!-- Toast 提示容器 -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- ========== 视图1：入口选择 ========== -->
+        <div class="view active" id="view-entry">
+            <div class="container">
+                <div class="card">
+                    <div class="hero-logo">🧠 心理评估平台</div>
+                    <p class="hero-subtitle-dark">基于心理学理论的科学性压抑指数评估系统</p>
+
+                    <div class="version-select-grid">
+                        <div class="version-card" id="btnSimpleVersion">
+                            <div class="version-card-icon">📋</div>
+                            <h3>普通版</h3>
+                            <p>经典30题/60题固定题库</p>
+                            <div class="version-card-tags">
+                                <span class="tag">⚡ 快速版 30题</span>
+                                <span class="tag">🔍 深度版 60题</span>
+                            </div>
+                        </div>
+
+                        <div class="version-card version-card-enhanced" id="btnEnhancedVersion">
+                            <div class="version-card-icon">🎲</div>
+                            <h3>增强版</h3>
+                            <p>600题专业题库 · 随机选题</p>
+                            <div class="version-card-tags">
+                                <span class="tag">⚡ 快速 20题</span>
+                                <span class="tag">📊 标准 40题</span>
+                                <span class="tag">🔍 深度 60题</span>
+                                <span class="tag">🎯 全面 100题</span>
+                                <span class="tag">🏆 专业 120题</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="disclaimer-bar">
+                        <strong>⚠️ 重要提醒：</strong>本评估仅用于自我了解和参考，不能作为医学诊断依据。如有心理健康问题，请咨询专业心理医生。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 视图2：版本选择（普通版/增强版的具体版本） ========== -->
+        <div class="view" id="view-version-select">
+            <div class="container">
+                <div class="card" style="text-align:center;">
+                    <h2 id="versionSelectTitle" style="color:#667eea; margin-bottom:0.5rem;">选择评估版本</h2>
+                    <p id="versionSelectDesc" style="color:#888; margin-bottom:1.5rem;">请选择适合您的评估版本</p>
+                    <div class="test-options-grid" id="versionOptionsGrid"></div>
+                    <button class="btn btn-outline" style="margin-top:1rem;"
+                        onclick="if(window.switchView) switchView('view-entry');">
+                        ← 返回主菜单
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 视图3：评估答题 ========== -->
+        <div class="view" id="view-assessment">
+            <div class="container">
+                <div class="assessment-header">
+                    <h2 id="assessmentTitle">评估中...</h2>
+                    <p class="header-desc" id="assessmentDesc"></p>
+                </div>
+
+                <!-- 顶部区域：题目内容 -->
+                <div id="questionContainer" class="question-card">
+                    <div class="question-category-tag" id="questionCategory" style="display:none;"></div>
+                    <div class="question-num" id="questionNum"></div>
+                    <div class="question-text" id="questionText"></div>
+                    <div class="options-list" id="optionsList"></div>
+                </div>
+
+                <!-- 中间区域：导航按钮 -->
+                <div class="nav-buttons">
+                    <button class="btn btn-outline" id="btnPrev" style="display:none;">← 上一题</button>
+                    <div></div>
+                    <button class="btn" id="btnNext" disabled>下一题 →</button>
+                </div>
+
+                <!-- 中下区域：进度条 -->
+                <div class="progress-section">
+                    <div class="progress-outer">
+                        <div class="progress-inner" id="progressBar"></div>
+                    </div>
+                    <p class="progress-label" id="progressLabel">第 1 题 / 共 0 题</p>
+                </div>
+
+                <!-- 底部区域：题目状态面板 -->
+                <div id="questionStatus" class="question-status-card">
+                    <div class="question-status-header">
+                        <span class="status-title">📝 题目状态</span>
+                        <span class="status-summary" id="statusSummary">已回答 0 / 0</span>
+                    </div>
+                    <div class="question-status-grid" id="questionStatusGrid"></div>
+                </div>
+
+                <div id="encouragementBanner" class="encouragement-banner">
+                    <span>💝</span> 请根据您的真实感受回答，没有标准答案，每个选择都值得尊重。
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 视图4：结果展示 ========== -->
+        <div class="view" id="view-result">
+            <div class="container" id="resultContainer"></div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 - 带错误处理 -->
+    <script>
+        // 资源加载监控系统
+        window.ResourceMonitor = {
+            loaded: { css: false, js: false },
+            errors: [],
+            startTime: performance.now(),
+
+            report: function (type, status, message) {
+                console.log(`[Resource Monitor] ${type}: ${status} - ${message}`);
+                if (status === 'error') {
+                    this.errors.push({ type, message, time: performance.now() });
+                }
+            },
+
+            checkReady: function () {
+                if (this.loaded.css && this.loaded.js) {
+                    const loadTime = (performance.now() - this.startTime).toFixed(2);
+                    console.log(`[Resource Monitor] All resources loaded in ${loadTime}ms`);
+                    this.initApp();
+                }
+            },
+
+            initApp: function () {
+                // 隐藏预加载遮罩
+                const overlay = document.getElementById('preloadOverlay');
+                const appContainer = document.getElementById('appContainer');
+
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                    setTimeout(() => overlay.remove(), 500);
+                }
+
+                if (appContainer) {
+                    appContainer.style.visibility = 'visible';
+                }
+            }
+        };
+
+        // CSS加载检测
+        (function () {
+            const checkCSS = function () {
+                const testEl = document.createElement('div');
+                testEl.style.position = 'absolute';
+                testEl.style.visibility = 'hidden';
+                testEl.className = 'test-css-loaded';
+                document.body.appendChild(testEl);
+
+                const computed = window.getComputedStyle(testEl);
+                const isLoaded = computed.getPropertyValue('content') === '"CSS_LOADED"' ||
+                    document.styleSheets.length > 0;
+
+                document.body.removeChild(testEl);
+
+                if (isLoaded || performance.now() - window.ResourceMonitor.startTime > 3000) {
+                    window.ResourceMonitor.loaded.css = true;
+                    window.ResourceMonitor.report('CSS', 'success', 'Stylesheet loaded');
+                    window.ResourceMonitor.checkReady();
+                } else {
+                    requestAnimationFrame(checkCSS);
+                }
+            };
+
+            // 等待DOM准备好
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', checkCSS);
+            } else {
+                checkCSS();
+            }
+        })();
+    </script>
+
+    <!-- 主应用脚本 -->
+    <script src="app.js" onerror="window.ResourceMonitor.report('JS', 'error', 'Failed to load app.js');"></script>
+</body>
+
+</html>
